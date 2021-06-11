@@ -26,5 +26,5 @@ g = ggplot(both, aes(x = t, y = f,
        title = "Example functional inputs")
 
 ggsave(filename = "include/functional_input.jpeg", plot = g,
-       width = 10, height = 8)                  
+       width = 10, height = 5)                  
                 
