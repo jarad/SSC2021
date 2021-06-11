@@ -1,0 +1,680 @@
+\documentclass[10pt,aspectratio=169,handout]{beamer}
+\usepackage{natbib}
+\usepackage{pdfpages}
+\usepackage{tikz}
+\usepackage[ruled,vlined,linesnumbered,resetcount]{algorithm2e}
+
+\usetheme{AnnArbor}
+\usecolortheme{beaver}
+
+\usetikzlibrary{arrows.meta,positioning}
+
+\graphicspath{{include/}}
+
+\setlength{\unitlength}{\textwidth}  % measure in textwidths
+\usepackage[normalem]{ulem}
+
+% to avoid counting all pages
+\newcommand{\backupbegin}{
+   \newcounter{finalframe}
+   \setcounter{finalframe}{\value{framenumber}}
+}
+\newcommand{\backupend}{
+   \setcounter{framenumber}{\value{finalframe}}
+}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize items}[default]
+% \setbeamertemplate{itemize subitem}{\alph{enumii}.}
+% \setbeamertemplate{itemize subsubitem}{\roman{enumiii}.}
+\setkeys{Gin}{width=0.6\textwidth}
+
+% Reference and link colors
+\hypersetup{
+  colorlinks  = false,
+  linkcolor   = blue,
+  urlcolor    = blue,
+  citecolor   = blue,
+  anchorcolor = blue
+}
+
+% Math commands
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\I}{\mathrm{I}}
+\newcommand{\ind}{\stackrel{ind}{\sim}}
+\providecommand{\ov}[1]{\overline{#1}}
+\newcommand{\ubar}[1]{\text{\b{$#1$}}}
+
+\usefonttheme[onlymath]{serif} % uncomment for article style math
+
+\institute[ISU]{Iowa State University}
+\date{\today}
+
+\title[Emulation of APSIM/WEPP]{Gaussian Processes with Functional Length-Scales for Agricultural Models}
+\author[Niemi and Damiano]{Jarad Niemi and Luis Damiano}
+
+<<options, results='hide', echo=FALSE, purl=FALSE>>=
+opts_chunk$set(comment=NA,
+               fig.width=6, fig.height=5,
+               size='tiny',
+               out.width='0.8\\textwidth',
+               fig.align='center',
+               message = FALSE,
+               echo = FALSE,
+               cache = TRUE)
+options(width=120)
+@
+
+<<libraries, message=FALSE, warning=FALSE>>=
+library("tidyverse")
+library("mvtnorm")
+@
+
+<<set_seed, echo=FALSE>>=
+set.seed(20210611)
+@
+
+\begin{document}
+
+% JN ---------------------------------------------------------------------------
+
+\begin{frame}
+
+  \maketitle
+  \vspace{0.2in} \pause
+
+  {\footnotesize
+    Funded, in part, by
+    \begin{itemize}
+      \item[-] the Iowa State University Presidential Interdisciplinary
+      Research Initiative on C-CHANGE: Science for a Changing Agriculture
+      \item[-] USDA NIFA CAP: \href{https://cris.nifa.usda.gov/cgi-bin/starfinder/0?path=fastlink1.txt&id=anon&pass=&search=R=88415&format=WEBLINK}{Consortium for Cultivating Human And Naturally reGenerative Enterprises (C-CHANGE)}
+      \item[-] Foundation for Food and Agriculture Research: \href{https://foundationfar.org/2019/04/01/ffar-grant-improves-soil-health-and-increases-farm-sustainability/}{Prairie Strips for Healthy Soils and Thriving Farms}
+    \end{itemize}
+  }
+
+\end{frame}
+
+
+
+
+
+\section{C-CHANGE}
+\begin{frame}[t]
+\frametitle{C-CHANGE: Science for a changing agriculture}
+
+\begin{columns}[t]
+\begin{column}{0.35\textwidth}
+\includegraphics[width=\textwidth]{cchange}
+\url{http://agchange.org} \pause
+\end{column}
+\begin{column}{0.5\textwidth}
+\includegraphics[width=\textwidth]{prairie_strips}
+\url{http://prairiestrips.org}
+\end{column}
+\end{columns}
+
+
+
+
+\end{frame}
+
+
+\section{Effects of agriculture}
+\subsection{Production}
+\begin{frame}
+\frametitle{Iowa Agricultural Production}
+
+{\tiny \url{https://www.iadg.com/iowa-advantages/target-industries/}}
+
+\begin{quote}
+Iowa is the largest producer of corn, pork and eggs in the United States and
+second in soybeans and red meat production.
+\end{quote}
+
+\vspace{0.2in}
+
+\includegraphics[height=0.3\textheight, width=0.19\textwidth, trim = 0 0 0 50, clip]{corn}
+\includegraphics[height=0.3\textheight, width=0.19\textwidth, trim = 0 0 250 0, clip]{hogs}
+\includegraphics[height=0.3\textheight, width=0.19\textwidth]{eggs}
+\includegraphics[height=0.3\textheight, width=0.19\textwidth]{soybeans}
+\includegraphics[height=0.3\textheight, width=0.19\textwidth, trim = 0 100 0 100, clip]{cows}
+
+\vspace{0.2in}
+
+{\tiny
+\url{https://www.britannica.com/plant/corn-plant}
+
+\url{https://www.nationalhogfarmer.com/marketing/total-pork-production-2014-down-slightly}
+
+\url{https://www.medicalnewstoday.com/articles/283659}
+
+\url{https://www.midwestfarmreport.com/2019/12/11/state-soybean-yield-contest-entries-announced/}
+
+\url{https://www.scientificamerican.com/article/meat-and-environment/}
+}
+
+\end{frame}
+
+
+
+
+\subsection{Soil loss}
+\begin{frame}
+\frametitle{Soil loss}
+
+Iowa loses \$1,000,000,000/year in soil
+
+\vspace{0.2in}
+
+\includegraphics[width=0.7\textwidth]{soil_loss}
+
+{\tiny
+\url{https://www.desmoinesregister.com/story/money/agriculture/2014/05/03/erosion-estimated-cost-iowa-billion-yield/8682651/}
+}
+
+\end{frame}
+
+
+
+\subsection{Dead zone}
+\begin{frame}
+\frametitle{Gulf of Mexico Dead Zone}
+\setkeys{Gin}{width=0.9\textwidth}
+
+\includegraphics{dead_zone}
+
+{\tiny \url{https://www.noaa.gov/media-release/gulf-of-mexico-dead-zone-is-largest-ever-measured}}
+\end{frame}
+
+
+
+\subsection{Des Moines Water Works Lawsuit}
+\begin{frame}
+\frametitle{Des Moines Water Works Lawsuit}
+\setkeys{Gin}{width=0.7\textwidth}
+
+\includegraphics{des_moines_water_works_lawsuit}
+
+{\tiny \url{https://www.lwvumrr.org/blog/des-moines-water-works-lawsuit-update}}
+
+\end{frame}
+
+
+
+
+
+
+
+
+
+\section{USDA NIFA}
+\begin{frame}
+\frametitle{USDA NIFA - Biogas production from manure and herbaceous biomass}
+\setkeys{Gin}{width=0.8\textwidth}
+
+\includegraphics{usda_nifa}
+
+\vspace{0.2in} \pause
+
+\includegraphics{usda_nifa_value_chain}
+
+\end{frame}
+
+
+
+\subsection{Computer models}
+\begin{frame}
+  \frametitle{Computer models}
+
+  \begin{itemize}[<+->]
+  \item \href{https://www.fs.usda.gov/ccrc/tools/watershed-erosion-prediction-project}{Water Erosion Prediction Project (WEPP)}
+    \begin{itemize}
+    \item \href{https://www.dailyerosion.org/map}{Daily Erosion Project (DEP)}
+    % \item \href{https://www.dailyerosion.org/map/#20200908//avg_delivery/-94.50/42.10/6//0/}{Daily Erosion Project (DEP)}
+    \end{itemize}
+  \item \href{https://www.apsim.info/}{Agricultural Production Systems sIMulator (APSIM)}
+    \begin{itemize}
+    \item \href{https://cchange.research.iastate.edu/projects/foresite-precision-agriculture-data-as-an-isu-service/}{Foresite}
+    \end{itemize}
+  \item \href{https://github.com/PSUmodeling/Cycles}{Cycles}
+  \item \href{http://www.iowabiogasmodel.us/}{Iowa Biogas Assessment Model (IBAM)}
+  \item others...
+  \end{itemize}
+\end{frame}
+
+% LD ---------------------------------------------------------------------------
+
+% Part I: Introduction ---------------------------------------------------------
+\section{Introduction}
+
+\begin{frame}
+  \frametitle{APSIM}
+
+  \begin{figure}
+      \begin{center}
+          \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{./include/foresite}
+      \end{center}
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Daily Erosion Project (DEP)}
+\framesubtitle{using Water Erosion Prediction Project (WEPP)}
+
+\includegraphics[width=0.49\textwidth,trim={0 0 0 2.5cm},clip]{./include/dep_precip}
+\includegraphics[width=0.49\textwidth,trim={0 0 0 2.5cm},clip]{./include/dep_soil_loss}
+
+\end{frame}
+
+
+% \begin{frame}
+%   \frametitle{APSIM}
+%   \framesubtitle{Overview}
+%   \setkeys{Gin}{width=0.5\textwidth}
+%
+%   \pause
+%
+%   \begin{figure}
+%       \begin{center}
+%           \includegraphics[]{./include/jigsaw}
+%       \end{center}
+%   \end{figure}
+%
+%    \pause
+%
+%   \begin{itemize}[<+->]
+%     \item Physical process based
+%     \item Peer-reviewed
+%     \item Flexible
+%     \item Calibrated for many different climates and countries
+%     \item Dedicated, funded team of software engineers working to improve it
+%   \end{itemize}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{APSIM}
+%   \framesubtitle{Emulation goals}
+%
+%   \pause
+%
+%   \begin{itemize}[<+->]
+%     \item Variable selection: to guide data collection by field scientists.
+%     \item Model calibration: APSIM assumes a flat, uniform soil. TWI.
+%     \item Identify deficiencies: does APSIM emphasize on soil too much?
+%     \item Uncertainty quantification: APSIM is deterministic, real life is not.
+%     \item Inform the development \& calibration of new crop modules (e.g. cover crops).
+%     \item Portability: web interface back end for on-line prediction.
+%     \item Assist scientists in studying agronomical hypothesis.
+%   \end{itemize}
+% \end{frame}
+
+\begin{frame}
+  \frametitle{APSIM}
+  \framesubtitle{Input space}
+
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}[<+->]
+        \item 2,160 run-specific input values
+        \begin{itemize}
+          \item Soil properties 22 functionals x 16 layers, 2 scalars.
+          \item Climate dynamics 4 functionals x 365 daily values, 2 scalars.
+          \item Land management practices, mostly categorical scalars.
+        \end{itemize}
+      \end{itemize}
+    \end{column}
+
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}[<+->]
+        \item The input space is...
+        \begin{itemize}
+          \item High dimensional: computational and modeling challenging.
+          \item Structured: complex to capture hierarchy.
+          \item Vast: large number of runs to explore it.
+        \end{itemize}
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% Part II: Methodology & Results -----------------------------------------------
+\section{Methodology \& Results}
+
+% \begin{frame}
+%   \frametitle{APSIM}
+%   \framesubtitle{Exploratory Analyses}
+%
+%   \pause
+%
+%   % Cite package -- pretty fast
+%   \begin{columns}
+%     \begin{column}{0.5\textwidth}
+%         \begin{figure}
+%         \begin{center}
+%             \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{./include/rf_importance_cl}
+%         \end{center}
+%   \end{figure}
+%     \end{column}
+%
+%     \pause
+%
+%     \begin{column}{0.5\textwidth}
+%         \begin{figure}
+%       \begin{center}
+%           \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{./include/rf_partial_3}
+%       \end{center}
+%   \end{figure}
+%     \end{column}
+%   \end{columns}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{One-at-a-time knot selection}
+%   \framesubtitle{Training a GP}
+%
+%   Find the maximum likelihood estimator (MLE) for $\theta = (\tau^2,\sigma^2,\phi)$,
+%   \[
+%     \hat{\theta} = \mbox{argmax}_\theta \, p(y|\theta)
+%     = \mbox{argmax}_{\theta} \, N\left(y; m_x, \tau^2\I + \Sigma(\theta)\right)
+%   \]
+%
+%   where $y=(y_1,\ldots,y_N)$.
+%
+%   The log-likelihood is
+%   \[
+%     \begin{array}{rl}
+%       \log \mathcal{N}(y; m_x, \tau^2\I+\Sigma_\theta) = & C \\
+%       &- \frac{1}{2}\log | \tau^2\I+\Sigma(\theta)| \\
+%       &-\frac{1}{2} (y-m_x)^\top [ \tau^2\I+\Sigma(\theta)]^{-1} (y-m_x)
+%     \end{array}
+%   \]
+%
+%   \vspace{0.2in} \pause
+%
+%   If there are $N$ observations, $\Sigma(\theta)$ is an $N\times N$
+%   covariance matrix
+%
+%   \pause
+%
+%   and thus the computational time scales as $\mathcal{O}(N^3)$.
+%
+%   \vspace{0.2in}
+%
+%   This is doable if $N\approx 1,000$ but not when you start getting larger
+%   and larger data sets.
+% \end{frame}
+%
+% \begin{frame}
+%   \frametitle{One-at-a-time knot selection}
+%   \framesubtitle{Fully Independent Conditional (FIC) Approximation}
+%
+%   Introduce a set of knots $x^{\dagger} = \left\{x_1^\dagger, \ldots, x_K^\dagger \right\}$ with $K<<N$,
+%
+%   \pause
+%
+%   such that
+%   \[
+%     p(f_x,f_{x^{\dagger}}|\theta) = p(f_x|f_{x^{\dagger}}, \theta)p(f_{x^{\dagger}}|\theta).
+%   \]
+%
+%   \pause
+%
+%   where
+%
+%   \[
+%     \begin{array}{rl}
+%       f_x| f_{x^{\dagger}} , \theta  &\sim  \mathcal{N}\left( m_x + \Sigma_{xx^{\dagger}} \Sigma_{x^{\dagger}x^{\dagger}}^{-1}(f_{x^{\dagger}} - m_{x^{\dagger}}) , \Lambda \right)  \pause \\
+%       f_{x^{\dagger}}| \theta &\sim  \mathcal{N}(m_{x^{\dagger}}, \Sigma_{x^{\dagger}x^{\dagger}})
+%     \end{array}
+%   \]
+%
+%   \pause
+%
+%   with $\Lambda = \text{diag}\left(\Sigma_{xx} - \Sigma_{x x^{\dagger}} \Sigma_{x^{\dagger}x^{\dagger}}^{-1} \Sigma_{x^{\dagger}x}\right)$.
+%
+%   \vspace{0.2in} \pause
+%
+%   This joint implies the following marginal distribution for $f_x$:
+%
+%   \[
+%     f_x| \theta \sim \mathcal{N}(m_{x}, \Lambda + \Sigma_{x x^{\dagger}} \Sigma_{x^{\dagger}x^{\dagger}}^{-1} \Sigma_{x^{\dagger}x})
+%   \]
+%
+%   \pause
+%
+%   which has the correct marginal means and variances, \pause
+%   but the covariances are controlled by the knots.
+%
+%   \vspace{0.1in} \pause
+%
+%   {\tiny
+%     \citep{seeger2003, candela2005, snelson2006, banerjee2008, finley2009, titsias2009, cao2013}
+%   }
+% \end{frame}
+%
+% \begin{frame}
+%   \frametitle{One-at-a-time knot selection}
+%   \framesubtitle{Knot selection algorithm}
+%
+%   Algorithm 1. OAT knot selection algorithm.
+%
+%   \pause
+%
+%   \begin{algorithm}[H]
+%     \SetAlgoLined
+%     \textbf{Initialize:} $x^{\dagger} = \{x^{\dagger}_i \}_{i = 1}^{K_{I}}$ \pause \;
+%     $\hat{\theta} = \mbox{argmax}_{\theta} p(y|x, x^{\dagger}, \theta)$ \pause \;
+%
+%     \Repeat{$|x^{\dagger}| = K_{max}$ or convergence}{
+%       propose new knot $x^{\dagger^*} \leftarrow J(y , x, x^{\dagger}, \hat{\theta})$ \pause \;
+%       $(\hat{x}^{\dagger^*}, \hat{\theta}) = \mbox{argmax}_{(x^{\dagger^*}, \theta)} p(y|x, \{x^{\dagger}, x^{\dagger^*}\}, \theta)$ \pause \;
+%       $x^{\dagger} = \{x^{\dagger}, \hat{x}^{\dagger^*}\}$ \;
+%     }
+%   \end{algorithm}
+%
+%   {\tiny
+%     \citep{gartonKnotSelectionSparse2020,gartonScorebasedLikelihoodRatios2020}
+%   }
+% \end{frame}
+%
+% \begin{frame}
+%   \frametitle{One-at-a-time knot selection}
+%   \framesubtitle{Knot proposal algorithm}
+%
+%   Algorithm 2. Knot proposal algorithm. Set the minimum ($T_{min}$) and maximum ($T_{max}$) number of marginal
+% likelihood evaluations. $k$ is the current number of knots.
+%
+%   \pause
+%
+%   {\small
+%     \begin{algorithm}[H]
+%       \SetAlgoLined
+%       set the mean of the meta GP equal to
+%       $\log p\left(y\left|x,\left\{x^{\dagger},\cdot\right\}, \hat{\theta}\right.\right)$ \pause \;
+%       sample $x_1^\dagger, ..., x^\dagger_{T_{min}}$ without replacement from $x$ \pause \;
+%
+%       augment known marginal likelihood values
+%       $w_j = \log p\left(y\left|x,\left\{x^{\dagger},x^{\dagger}_j\right\}, \hat{\theta}\right.\right)$ for $j=1,\ldots,k$
+%       with evaluations of the marginal likelihood at the new knots,
+%       that is $w_{k+j} = \log p\left(y\left|x, \left\{x^{\dagger},x^\dagger_j\right\}, \hat{\theta}\right.\right)$ for $j = 1,...,T_{min}$ \pause \;
+%
+%       \For{$t = T_{min}+1, ..., T_{max}$}{
+%         update covariance parameters in meta GP \pause \;
+%         $x^*_t = \mbox{argmax}_{z \in x \setminus \{x^{\dagger}_l\}_{l = 1}^{t - 1} } \alpha\left(z;w,\left\{x_1^\dagger,\ldots,x_{t-1}^\dagger\right\}\right)$ \pause \;
+%         $w_t = \log p\left(y\left|x, \left\{x^{\dagger}, x^*_t \right\}, \hat{\theta}\right.\right)$ \pause \;
+%       }
+%       return $x_j^*$ such that $j=\mbox{argmax}_t \, w_t$
+%     \end{algorithm}
+%   }
+%
+%   {\tiny
+%     \citep{gartonKnotSelectionSparse2020,gartonScorebasedLikelihoodRatios2020}
+%   }
+% \end{frame}
+%
+% \begin{frame}
+%   \frametitle{OAT Knot selection}
+%   \framesubtitle{Visualization}
+%
+%   \begin{figure}
+%       \begin{center}
+%           \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{./include/oatfit}
+%       \end{center}
+%   \end{figure}
+%   % s
+% \end{frame}
+
+\section{Gaussian Process}
+
+\begin{frame}
+  \frametitle{Vector-input Gaussian Process (viGP)}
+
+  \pause
+
+For observation $i$, we have response $Y_i \in \R$ and
+input $X_i = (X_{i,1},\ldots,X_{i,D})$.
+\pause
+Our computer model is $f()$ with $Y_i = f(X_i)$.
+
+\vspace{0.1in} \pause
+
+Assume $f$ is a zero-mean Gaussian process with
+\[ Cov(Y_i,Y_j) = \sigma^2 k(X_i, X_j) \]
+\pause
+\[ k(X_i, X_j) = e^{-\frac{1}{2} D(X_i, X_j, \omega)} \]
+\pause
+and
+\[
+D(X_i, X_j, \omega) = \sum_{d = 1}^{D}{\omega_d (x_{i, d} - x_{j, d})^2}.
+\]
+\pause
+We'll refer to this as \alert{viGP}.
+\end{frame}
+
+
+
+\begin{frame}
+  \frametitle{Vector-input Gaussian Process using Principal Component Analysis}
+
+  \pause
+
+For observation $i$, we have $Y_i \in \R$ and $X_i = (X_{i1},\ldots,X_{iD})$
+\pause
+with PCA-rotated inputs $\tilde{X}_i = (\tilde{X}_{i1},\ldots,\tilde{X}_{iD})$.
+\pause
+Our computer model is $f()$ with $Y_i = f(\tilde{X}_i)$.
+
+\vspace{0.1in} \pause
+
+Assume $f$ is a zero-mean Gaussian process with
+\[ Cov(Y_i,Y_j) = \sigma^2 k(\tilde{X}_i, \tilde{X}_j) \]
+\pause
+\[ k(\tilde{X}_i, \tilde{X}_j) = e^{-\frac{1}{2} D(\tilde{X}_i, \tilde{X}_j, \omega)} \]
+\pause
+and
+\[
+D(\tilde{X}_i, \tilde{X}_j, \omega) = \sum_{d = 1}^{D} \omega_d (\tilde{x}_{i, d} - \tilde{x}_{j, d})^2.
+\]
+\pause
+We'll refer to this as \alert{viGP (PCA)}.
+
+\end{frame}
+
+
+
+
+\begin{frame}
+  \frametitle{Functional-input Gaussian Process}
+  \pause
+
+For observation $i$, we have $Y_i \in \R$ and $X_i(t)$ for $t \in [0,T]$.
+\pause
+Our computer model is $f()$ with $Y_i = f(X_i(t))$.
+
+\vspace{0.1in} \pause
+
+The functional-input Gaussian Process has
+
+\[ k(X_i, X_j) = \sigma^2 e^{-\frac{1}{2} D(X_i(t), X_j(t), \omega)} \]
+\pause
+\[ D(X_i, X_j, \omega) = \int_0^T \omega(t) (X_i(t) - X_j(t))^2 dt \pause
+\approx \sum_{d=1}^D \omega(t_d) (X_i(t_d) - X_j(t_d))^2. \]
+\pause
+For the \alert{functional length-scale},
+we assume
+\[
+\omega(t) = \exp\left( 2 \sigma_\ell^2 t^\eta \right).
+\]
+
+\pause
+
+We'll refer to this as \alert{fiGP}.
+
+\end{frame}
+
+
+
+
+
+\begin{frame}
+\frametitle{Out-of-sample RMSE}
+\setkeys{Gin}{width=0.85\textwidth}
+\includegraphics{kfoldRMSE_overall}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Leave-one-out $-\log p(\tilde{y})$}
+\setkeys{Gin}{width=0.85\textwidth}
+\includegraphics{loo_overall}
+\end{frame}
+
+
+
+
+\begin{frame}
+  \frametitle{Summary}
+
+  Functional length-scales
+  \begin{itemize}
+    \item
+  \end{itemize}
+
+  \vspace{0.1in}
+
+  These slides are available at
+  \begin{itemize}
+    \item \url{https://github.com/jarad/SSC2021}
+    \item \url{http://www.jarad.me/research/presentations.html}
+  \end{itemize}
+
+  \vspace{0.1in}
+
+  \begin{center}
+    {\Large
+      Thank you!
+    }
+  \end{center}
+
+  Other links:
+  \begin{itemize}
+    \item \url{http://www.jarad.me/}
+    \item \url{https://luisdamiano.github.io/}
+  \end{itemize}
+\end{frame}
+
+\appendix
+\backupbegin
+
+\begin{frame}[allowframebreaks]
+  \frametitle{References}
+  \scriptsize
+  \bibliography{references_jn,references_ld}
+  \bibliographystyle{plainnat}
+\end{frame}
+\backupend
+
+\end{document}
