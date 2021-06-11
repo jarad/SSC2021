@@ -2,7 +2,8 @@
 \usepackage{natbib}
 \usepackage{pdfpages}
 \usepackage{tikz}
-\usepackage[ruled,vlined,linesnumbered,resetcount]{algorithm2e}
+\usepackage[export]{adjustbox}
+% \usepackage[ruled,vlined,linesnumbered,resetcount]{algorithm2e}
 
 \usetheme{AnnArbor}
 \usecolortheme{beaver}
@@ -52,7 +53,7 @@
 \date{\today}
 
 \title[Emulation of APSIM/WEPP]{Gaussian Processes with Functional Length-Scales for Agricultural Models}
-\author[Niemi and Damiano]{Jarad Niemi and Luis Damiano}
+\author{Jarad Niemi}
 
 <<options, results='hide', echo=FALSE, purl=FALSE>>=
 opts_chunk$set(comment=NA,
@@ -84,7 +85,32 @@ set.seed(20210611)
   \maketitle
   \vspace{0.2in} \pause
 
+  
+  
+  \only<2>{
   {\footnotesize
+  Collaborators:
+  \begin{columns}[t]
+  \begin{column}{0.49\textwidth}
+  \begin{itemize}
+  \item Luis Damiano, PhD Candidate 
+  \item Gulzina Kuttubekova, ISU MS 
+  \item Aditya Ranade, ISU MS 
+  \end{itemize}
+  \end{column}
+  \begin{column}{0.49\textwidth}
+  \begin{itemize}
+  \item Matt Nowatzke, ISU PhD Candidate 
+  \item Andy VanLoocke, ISU Associate Professor 
+  \item Emily Heaton, Illinois Professor 
+  \end{itemize}
+  \end{column}
+  \end{columns}
+  }
+  }
+
+  \onslide<3->{
+    {\footnotesize
     Funded, in part, by
     \begin{itemize}
       \item[-] the Iowa State University Presidential Interdisciplinary
@@ -92,6 +118,7 @@ set.seed(20210611)
       \item[-] USDA NIFA CAP: \href{https://cris.nifa.usda.gov/cgi-bin/starfinder/0?path=fastlink1.txt&id=anon&pass=&search=R=88415&format=WEBLINK}{Consortium for Cultivating Human And Naturally reGenerative Enterprises (C-CHANGE)}
       \item[-] Foundation for Food and Agriculture Research: \href{https://foundationfar.org/2019/04/01/ffar-grant-improves-soil-health-and-increases-farm-sustainability/}{Prairie Strips for Healthy Soils and Thriving Farms}
     \end{itemize}
+  }
   }
 
 \end{frame}
@@ -114,11 +141,32 @@ set.seed(20210611)
 \url{http://prairiestrips.org}
 \end{column}
 \end{columns}
+\end{frame}
 
 
+\begin{frame}
+\frametitle{Prairie STRIPS}
+\setkeys{Gin}{width=0.5\textwidth}
 
+\includegraphics{prairie_strips_article}
+
+\url{https://www.pnas.org/content/114/42/11247.short}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Prairie STRIPS results}
+\setkeys{Gin}{width=0.4\textwidth}
+
+\includegraphics{prairie_strips_results}
+\hspace{0.5in}
+\includegraphics{prairie_strips_results2}
+
+\url{https://www.pnas.org/content/114/42/11247/tab-figures-data}
 
 \end{frame}
+
+
 
 
 \section{Effects of agriculture}
@@ -216,7 +264,7 @@ Iowa loses \$1,000,000,000/year in soil
 
 \includegraphics{usda_nifa}
 
-\vspace{0.2in} \pause
+\vspace{0.2in}
 
 \includegraphics{usda_nifa_value_chain}
 
@@ -239,6 +287,7 @@ Iowa loses \$1,000,000,000/year in soil
     \item \href{https://cchange.research.iastate.edu/projects/foresite-precision-agriculture-data-as-an-isu-service/}{Foresite}
     \end{itemize}
   \item \href{https://github.com/PSUmodeling/Cycles}{Cycles}
+  \item \href{https://github.com/PSUmodeling/Cycles}{Cycles3}
   \item \href{http://www.iowabiogasmodel.us/}{Iowa Biogas Assessment Model (IBAM)}
   \item others...
   \end{itemize}
@@ -267,7 +316,35 @@ Iowa loses \$1,000,000,000/year in soil
 \includegraphics[width=0.49\textwidth,trim={0 0 0 2.5cm},clip]{./include/dep_precip}
 \includegraphics[width=0.49\textwidth,trim={0 0 0 2.5cm},clip]{./include/dep_soil_loss}
 
+\url{https://www.dailyerosion.org/}
+
 \end{frame}
+
+
+\begin{frame}[t]
+\frametitle{Input files}
+
+\vspace{-0.1in}
+
+\begin{tikzpicture}
+  \node (img1) {\includegraphics[frame]{dep_cli}};
+  \pause
+  \node (img2) at (img1.north) [yshift=-2cm,xshift=1cm] {\includegraphics[frame]{dep_sol}};
+  \pause
+  \node (img3) at (img2.north) [yshift=-2cm,xshift=1cm] {\includegraphics[frame, scale=0.7]{dep_slp}};
+  \pause
+  \node (img4) at (img1.north) [yshift=-5cm, xshift=5cm] {\includegraphics[frame]{dep_man}};
+\end{tikzpicture}
+\end{frame}
+
+
+
+\begin{frame}[t]
+\frametitle{WEPPR}
+\setkeys{Gin}{width=0.85\textwidth}
+\includegraphics{WEPPR}
+\end{frame}
+
 
 
 % \begin{frame}
@@ -343,189 +420,14 @@ Iowa loses \$1,000,000,000/year in soil
 % Part II: Methodology & Results -----------------------------------------------
 \section{Methodology \& Results}
 
-% \begin{frame}
-%   \frametitle{APSIM}
-%   \framesubtitle{Exploratory Analyses}
-%
-%   \pause
-%
-%   % Cite package -- pretty fast
-%   \begin{columns}
-%     \begin{column}{0.5\textwidth}
-%         \begin{figure}
-%         \begin{center}
-%             \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{./include/rf_importance_cl}
-%         \end{center}
-%   \end{figure}
-%     \end{column}
-%
-%     \pause
-%
-%     \begin{column}{0.5\textwidth}
-%         \begin{figure}
-%       \begin{center}
-%           \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{./include/rf_partial_3}
-%       \end{center}
-%   \end{figure}
-%     \end{column}
-%   \end{columns}
-% \end{frame}
+\begin{frame}
+\frametitle{Functional input - scalar output}
+\setkeys{Gin}{width=0.85\textwidth}
+\includegraphics{functional_input}
+\end{frame}
 
-% \begin{frame}
-%   \frametitle{One-at-a-time knot selection}
-%   \framesubtitle{Training a GP}
-%
-%   Find the maximum likelihood estimator (MLE) for $\theta = (\tau^2,\sigma^2,\phi)$,
-%   \[
-%     \hat{\theta} = \mbox{argmax}_\theta \, p(y|\theta)
-%     = \mbox{argmax}_{\theta} \, N\left(y; m_x, \tau^2\I + \Sigma(\theta)\right)
-%   \]
-%
-%   where $y=(y_1,\ldots,y_N)$.
-%
-%   The log-likelihood is
-%   \[
-%     \begin{array}{rl}
-%       \log \mathcal{N}(y; m_x, \tau^2\I+\Sigma_\theta) = & C \\
-%       &- \frac{1}{2}\log | \tau^2\I+\Sigma(\theta)| \\
-%       &-\frac{1}{2} (y-m_x)^\top [ \tau^2\I+\Sigma(\theta)]^{-1} (y-m_x)
-%     \end{array}
-%   \]
-%
-%   \vspace{0.2in} \pause
-%
-%   If there are $N$ observations, $\Sigma(\theta)$ is an $N\times N$
-%   covariance matrix
-%
-%   \pause
-%
-%   and thus the computational time scales as $\mathcal{O}(N^3)$.
-%
-%   \vspace{0.2in}
-%
-%   This is doable if $N\approx 1,000$ but not when you start getting larger
-%   and larger data sets.
-% \end{frame}
-%
-% \begin{frame}
-%   \frametitle{One-at-a-time knot selection}
-%   \framesubtitle{Fully Independent Conditional (FIC) Approximation}
-%
-%   Introduce a set of knots $x^{\dagger} = \left\{x_1^\dagger, \ldots, x_K^\dagger \right\}$ with $K<<N$,
-%
-%   \pause
-%
-%   such that
-%   \[
-%     p(f_x,f_{x^{\dagger}}|\theta) = p(f_x|f_{x^{\dagger}}, \theta)p(f_{x^{\dagger}}|\theta).
-%   \]
-%
-%   \pause
-%
-%   where
-%
-%   \[
-%     \begin{array}{rl}
-%       f_x| f_{x^{\dagger}} , \theta  &\sim  \mathcal{N}\left( m_x + \Sigma_{xx^{\dagger}} \Sigma_{x^{\dagger}x^{\dagger}}^{-1}(f_{x^{\dagger}} - m_{x^{\dagger}}) , \Lambda \right)  \pause \\
-%       f_{x^{\dagger}}| \theta &\sim  \mathcal{N}(m_{x^{\dagger}}, \Sigma_{x^{\dagger}x^{\dagger}})
-%     \end{array}
-%   \]
-%
-%   \pause
-%
-%   with $\Lambda = \text{diag}\left(\Sigma_{xx} - \Sigma_{x x^{\dagger}} \Sigma_{x^{\dagger}x^{\dagger}}^{-1} \Sigma_{x^{\dagger}x}\right)$.
-%
-%   \vspace{0.2in} \pause
-%
-%   This joint implies the following marginal distribution for $f_x$:
-%
-%   \[
-%     f_x| \theta \sim \mathcal{N}(m_{x}, \Lambda + \Sigma_{x x^{\dagger}} \Sigma_{x^{\dagger}x^{\dagger}}^{-1} \Sigma_{x^{\dagger}x})
-%   \]
-%
-%   \pause
-%
-%   which has the correct marginal means and variances, \pause
-%   but the covariances are controlled by the knots.
-%
-%   \vspace{0.1in} \pause
-%
-%   {\tiny
-%     \citep{seeger2003, candela2005, snelson2006, banerjee2008, finley2009, titsias2009, cao2013}
-%   }
-% \end{frame}
-%
-% \begin{frame}
-%   \frametitle{One-at-a-time knot selection}
-%   \framesubtitle{Knot selection algorithm}
-%
-%   Algorithm 1. OAT knot selection algorithm.
-%
-%   \pause
-%
-%   \begin{algorithm}[H]
-%     \SetAlgoLined
-%     \textbf{Initialize:} $x^{\dagger} = \{x^{\dagger}_i \}_{i = 1}^{K_{I}}$ \pause \;
-%     $\hat{\theta} = \mbox{argmax}_{\theta} p(y|x, x^{\dagger}, \theta)$ \pause \;
-%
-%     \Repeat{$|x^{\dagger}| = K_{max}$ or convergence}{
-%       propose new knot $x^{\dagger^*} \leftarrow J(y , x, x^{\dagger}, \hat{\theta})$ \pause \;
-%       $(\hat{x}^{\dagger^*}, \hat{\theta}) = \mbox{argmax}_{(x^{\dagger^*}, \theta)} p(y|x, \{x^{\dagger}, x^{\dagger^*}\}, \theta)$ \pause \;
-%       $x^{\dagger} = \{x^{\dagger}, \hat{x}^{\dagger^*}\}$ \;
-%     }
-%   \end{algorithm}
-%
-%   {\tiny
-%     \citep{gartonKnotSelectionSparse2020,gartonScorebasedLikelihoodRatios2020}
-%   }
-% \end{frame}
-%
-% \begin{frame}
-%   \frametitle{One-at-a-time knot selection}
-%   \framesubtitle{Knot proposal algorithm}
-%
-%   Algorithm 2. Knot proposal algorithm. Set the minimum ($T_{min}$) and maximum ($T_{max}$) number of marginal
-% likelihood evaluations. $k$ is the current number of knots.
-%
-%   \pause
-%
-%   {\small
-%     \begin{algorithm}[H]
-%       \SetAlgoLined
-%       set the mean of the meta GP equal to
-%       $\log p\left(y\left|x,\left\{x^{\dagger},\cdot\right\}, \hat{\theta}\right.\right)$ \pause \;
-%       sample $x_1^\dagger, ..., x^\dagger_{T_{min}}$ without replacement from $x$ \pause \;
-%
-%       augment known marginal likelihood values
-%       $w_j = \log p\left(y\left|x,\left\{x^{\dagger},x^{\dagger}_j\right\}, \hat{\theta}\right.\right)$ for $j=1,\ldots,k$
-%       with evaluations of the marginal likelihood at the new knots,
-%       that is $w_{k+j} = \log p\left(y\left|x, \left\{x^{\dagger},x^\dagger_j\right\}, \hat{\theta}\right.\right)$ for $j = 1,...,T_{min}$ \pause \;
-%
-%       \For{$t = T_{min}+1, ..., T_{max}$}{
-%         update covariance parameters in meta GP \pause \;
-%         $x^*_t = \mbox{argmax}_{z \in x \setminus \{x^{\dagger}_l\}_{l = 1}^{t - 1} } \alpha\left(z;w,\left\{x_1^\dagger,\ldots,x_{t-1}^\dagger\right\}\right)$ \pause \;
-%         $w_t = \log p\left(y\left|x, \left\{x^{\dagger}, x^*_t \right\}, \hat{\theta}\right.\right)$ \pause \;
-%       }
-%       return $x_j^*$ such that $j=\mbox{argmax}_t \, w_t$
-%     \end{algorithm}
-%   }
-%
-%   {\tiny
-%     \citep{gartonKnotSelectionSparse2020,gartonScorebasedLikelihoodRatios2020}
-%   }
-% \end{frame}
-%
-% \begin{frame}
-%   \frametitle{OAT Knot selection}
-%   \framesubtitle{Visualization}
-%
-%   \begin{figure}
-%       \begin{center}
-%           \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{./include/oatfit}
-%       \end{center}
-%   \end{figure}
-%   % s
-% \end{frame}
+
+
 
 \section{Gaussian Process}
 
@@ -548,7 +450,7 @@ Assume $f$ is a zero-mean Gaussian process with
 \pause
 and
 \[
-D(X_i, X_j, \omega) = \sum_{d = 1}^{D}{\omega_d (x_{i, d} - x_{j, d})^2}.
+D(X_i, X_j, \omega) = \sum_{d = 1}^{D}{\omega_d (X_{i, d} - X_{j, d})^2}.
 \]
 \pause
 We'll refer to this as \alert{viGP}.
@@ -561,9 +463,9 @@ We'll refer to this as \alert{viGP}.
 
   \pause
 
-For observation $i$, we have $Y_i \in \R$ and $X_i = (X_{i1},\ldots,X_{iD})$
+For observation $i$, we have $Y_i \in \R$ and $X_i = (X_{i,1},\ldots,X_{i,D})$
 \pause
-with PCA-rotated inputs $\tilde{X}_i = (\tilde{X}_{i1},\ldots,\tilde{X}_{iD})$.
+with PCA-rotated inputs $\tilde{X}_i = (\tilde{X}_{i,1},\ldots,\tilde{X}_{i,D})$.
 \pause
 Our computer model is $f()$ with $Y_i = f(\tilde{X}_i)$.
 
@@ -576,7 +478,7 @@ Assume $f$ is a zero-mean Gaussian process with
 \pause
 and
 \[
-D(\tilde{X}_i, \tilde{X}_j, \omega) = \sum_{d = 1}^{D} \omega_d (\tilde{x}_{i, d} - \tilde{x}_{j, d})^2.
+D(\tilde{X}_i, \tilde{X}_j, \omega) = \sum_{d = 1}^{D} \omega_d (\tilde{X}_{i, d} - \tilde{X}_{j, d})^2.
 \]
 \pause
 We'll refer to this as \alert{viGP (PCA)}.
@@ -590,21 +492,23 @@ We'll refer to this as \alert{viGP (PCA)}.
   \frametitle{Functional-input Gaussian Process}
   \pause
 
-For observation $i$, we have $Y_i \in \R$ and $X_i(t)$ for $t \in [0,T]$.
+For observation $i$, we have $Y_i \in \R$ and $X_i = X_i(t)$ for $t \in [0,T]$.
 \pause
 Our computer model is $f()$ with $Y_i = f(X_i(t))$.
 
 \vspace{0.1in} \pause
 
 The functional-input Gaussian Process has
-
-\[ k(X_i, X_j) = \sigma^2 e^{-\frac{1}{2} D(X_i(t), X_j(t), \omega)} \]
+\[ k(X_i, X_j) = e^{-\frac{1}{2} D(X_i, X_j, \omega)} \]
 \pause
-\[ D(X_i, X_j, \omega) = \int_0^T \omega(t) (X_i(t) - X_j(t))^2 dt \pause
-\approx \sum_{d=1}^D \omega(t_d) (X_i(t_d) - X_j(t_d))^2. \]
+\[ \begin{array}{rl}
+D(X_i, X_j, \omega) &= \int_0^T \omega(t) (X_i(t) - X_j(t))^2 dt \\ \pause
+&\approx \sum_{d=1}^D \omega(t_d) (X_i(t_d) - X_j(t_d))^2. 
+\end{array} \]
 \pause
-For the \alert{functional length-scale},
-we assume
+For the (inverse) \alert{functional length-scale}, we 
+% follow \cite{morrisGaussianSurrogatesComputer2012} and 
+assume
 \[
 \omega(t) = \exp\left( 2 \sigma_\ell^2 t^\eta \right).
 \]
@@ -629,7 +533,7 @@ We'll refer to this as \alert{fiGP}.
 \begin{frame}
 \frametitle{Leave-one-out $-\log p(\tilde{y})$}
 \setkeys{Gin}{width=0.85\textwidth}
-\includegraphics{loo_overall}
+\includegraphics{looNLPD_overall}
 \end{frame}
 
 
@@ -640,7 +544,10 @@ We'll refer to this as \alert{fiGP}.
 
   Functional length-scales
   \begin{itemize}
-    \item
+  \item Additional simulations
+  \item Expanding to high dimensional functional inputs
+  \item More flexible functional length scales
+  \item Combining with additional inputs
   \end{itemize}
 
   \vspace{0.1in}
@@ -666,15 +573,15 @@ We'll refer to this as \alert{fiGP}.
   \end{itemize}
 \end{frame}
 
-\appendix
-\backupbegin
-
-\begin{frame}[allowframebreaks]
-  \frametitle{References}
-  \scriptsize
-  \bibliography{references_jn,references_ld}
-  \bibliographystyle{plainnat}
-\end{frame}
-\backupend
+% \appendix
+% \backupbegin
+% 
+% \begin{frame}[allowframebreaks]
+%   \frametitle{References}
+%   \scriptsize
+%   \bibliography{references_jn,references_ld}
+%   \bibliographystyle{plainnat}
+% \end{frame}
+% \backupend
 
 \end{document}
